@@ -654,7 +654,8 @@ function frame() {
   requestAnimationFrame(frame);
   const now = performance.now();
   let dt = (now - last) / 1000; last = now;
-  if (!(dt > 0) || dt > .05) dt = .016;
+  if (!(dt > 0)) dt = .016;
+  const realDt = Math.min(dt, .6);   // 프레임이 느려도 실제 시간만큼 물리를 진행
 
   if (phase === 'intro') {
     const T = now - introStart;
@@ -672,7 +673,8 @@ function frame() {
     if (AU.ctx && secIdx % 1 === 0) AU.padF.frequency.setTargetAtTime(520 + 1500 * clamp(elapsed / 1800000, 0, 1), AU.ctx.currentTime, 3);
   }
   processJobs(now);
-  physics(dt, now);
+  for (let left = realDt; left > 1e-4; left -= 1 / 60) physics(Math.min(1 / 60, left), now);
+  dt = realDt;
   for (let i = dust.length - 1; i >= 0; i--) {
     const d = dust[i]; d.life += dt; d.vy += 260 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.vx *= .98;
     if (d.life >= d.max) dust.splice(i, 1);
